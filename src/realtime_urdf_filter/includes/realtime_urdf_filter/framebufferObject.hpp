@@ -1,0 +1,8 @@
+#ifndef  REALTIME_URDF_FILTER_FRAMEBUFFER_OBJECT_HPP_
+#define  REALTIME_URDF_FILTER_FRAMEBUFFER_OBJECT_HPP_
+
+class FrameBuffer
+{
+
+};
+#endif

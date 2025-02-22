@@ -1,0 +1,4 @@
+/urdf_filter:
+  ros__parameters:
+  geometry_type: 'visual'
+  ignore: []
