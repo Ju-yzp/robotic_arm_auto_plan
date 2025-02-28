@@ -1,0 +1,8 @@
+#unused file that generate in build process
+build
+install
+log
+cmake
+#vscode setting file
+.vscode
+.cache

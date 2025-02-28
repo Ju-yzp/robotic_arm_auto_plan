@@ -1,0 +1,5 @@
+/urdf_filter:
+  ros__parameters:
+    ros_package: 'realtime_urdf_filter'
+    urdf_file: 'arm.urdf'
+    gemetry_type: 'visual'
