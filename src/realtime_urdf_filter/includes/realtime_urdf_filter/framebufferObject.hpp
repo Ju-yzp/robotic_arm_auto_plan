@@ -47,6 +47,8 @@ class FrameBufferObject
         // set the wrap t
         void           setWrapT(GLint wrapT){} 
 
+        void		   printFramebufferStatus();
+
     protected:
         // texture target, default: GL_TEXTURE_RECTANGLE_ARB
         GLenum          textureTarget_;
@@ -114,7 +116,7 @@ class FrameBufferObject
         bool            passThroughProgramInitialized_;
 
         // id of framebuffer
-        GLuint          frameBufferId_;
+        GLuint          frameBufferID_;
 
         // texture ids of the color attachment textures
         GLuint          colorAttachmentId_[MAX_COLOR_COMPONENTS];
@@ -138,6 +140,11 @@ class FrameBufferObject
 
         private:
 
-        typedef std::pair<std::string, std::string> keyVal;
+        /// parse the mode string and set configuration
+        void			parseModeString(const char *modeString);
+
+        typedef std::pair<std::string, std::string> KeyVal;
+        /// get the key=value pair of a single token from the mode string
+        KeyVal			getKeyValuePair(std::string token);
 };
 #endif
