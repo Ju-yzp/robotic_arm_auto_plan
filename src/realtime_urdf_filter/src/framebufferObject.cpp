@@ -8,6 +8,48 @@
 #include <iostream>
 #include <string>
 #include <vector>
+FrameBufferObject::FrameBufferObject(const char *modeString):
+
+    colorFormat_(GL_RGBA),
+    internalColorFormat_(GL_RGBA),
+    colorType_(GL_UNSIGNED_BYTE),
+
+    colorAttachmentDepth_(GL_RGBA8),
+
+    depthFormat_(GL_DEPTH_COMPONENT),
+    internalDepthFormat_(GL_DEPTH_COMPONENT24),
+    depthType_(GL_UNSIGNED_BYTE),
+
+    wrapS_(GL_CLAMP_TO_EDGE),
+    wrapT_(GL_CLAMP_TO_EDGE),
+    minFilter_(GL_LINEAR),
+    magFilter_(GL_LINEAR),
+
+    width_(512),
+    height_(512),
+
+    extensionSupported_(false),
+    initialized_(false),
+
+    colorAttachment_(false),
+    colorAttachmentRenderTexture_(false),
+
+    depthAttachment_(false),
+    depthAttachRenderTexture_(false),
+
+    stencilAttachment_(false),
+    stencilAttachmentRenderTexture_(false),
+
+    internalStencilFormat_(GL_STENCIL_INDEX1),
+
+    passThroughProgramInitialized_(false),
+
+    floatColorBuffer_(false),
+
+    numClorAttachment_(1)
+    {
+        parseModeString(modeString);
+    }
 
 FrameBufferObject::~FrameBufferObject()
 {
@@ -38,8 +80,8 @@ FrameBufferObject::~FrameBufferObject()
 
 bool FrameBufferObject::initialize(unsigned int width,unsigned int height)
 {
-    if(!initialized_)
-        return reinitialize(width,height);
+    if(initialized_)
+       return reinitialize(width,height);
 
     //set up width and height
     width_ = width;
@@ -122,7 +164,9 @@ bool FrameBufferObject::initialize(unsigned int width,unsigned int height)
                                           colorAttachmentId_[i]);
             }
 
-
+            if(!checkFramebufferStatus())
+               std::cerr<<"ERROR: "<<__FILE__<<":"<<__LINE__<<std::endl;
+            printFramebufferStatus();
         }
     }
 
@@ -180,6 +224,9 @@ bool FrameBufferObject::initialize(unsigned int width,unsigned int height)
                                       GL_DEPTH_ATTACHMENT,
                                       GL_RENDERBUFFER,
                                       depthAttachmentID_);
+            if(!checkFramebufferStatus())
+               std::cerr<<"ERROR: "<<__FILE__<<":"<<__LINE__<<std::endl;
+            printFramebufferStatus();
             
         }
     }
@@ -219,27 +266,42 @@ bool FrameBufferObject::initialize(unsigned int width,unsigned int height)
                                    depthAttachmentID_,
                                    0);
         }
+        else
+        {
+            // initialize depth renderbuffer
+            glBindRenderbuffer(GL_RENDERBUFFER,depthAttachmentID_);
+            glRenderbufferStorage(GL_RENDERBUFFER,
+                                GL_STENCIL_ATTACHMENT,
+                                GL_RENDERBUFFER,
+                                depthAttachmentID_);
+            
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                                    GL_STENCIL_ATTACHMENT,
+                                    GL_RENDERBUFFER,
+                                    depthAttachmentID_);
+            if(!checkFramebufferStatus())
+                std::cerr<<"ERROR: "<<__FILE__<<":"<<__LINE__<<std::endl;
+            printFramebufferStatus();
+        }
 
-    }else
-    {
-        // initialize depth renderbuffer
-        glBindRenderbuffer(GL_RENDERBUFFER,depthAttachmentID_);
-        glRenderbufferStorage(GL_RENDERBUFFER,
-                              GL_STENCIL_ATTACHMENT,
-                              GL_RENDERBUFFER,
-                              depthAttachmentID_);
     }
+
 
     // disable framebuffer again
     glBindFramebuffer(GL_FRAMEBUFFER,0);
 
     // set up status of framebuffer
     initialized_ = true;
+    extensionSupported_ = true;
     return true;
 }
 
-bool FrameBufferObject::reinitialize(unsigned int width,unsigned int height)
+bool FrameBufferObject::reinitialize(unsigned int width,unsigned int height,const char *modeString)
 {
+    if(!initialized_)
+       return initialize(width,height);
+    if(extensionSupported_)
+       return false;
 
     // clear old configuration
     glDeleteFramebuffers(1,&frameBufferID_);
@@ -260,26 +322,23 @@ bool FrameBufferObject::reinitialize(unsigned int width,unsigned int height)
 
     // reset status and initialize again
     initialized_ = false;
+    parseModeString(modeString);
     return initialize(width,height);
 }
 
 
-void FrameBufferObject::beginCapture(bool enablePassThroughShder )
+void FrameBufferObject::beginCapture( )
 {
     glGetIntegerv(GL_VIEWPORT,viewport_);
     glViewport(0,0,width_,height_);
 
     if(initialized_)
-       glBindFramebuffer(GL_FRAMEBUFFER,frameBufferID_);
-
-    if( enablePassThroughShder )
-    {
-        passThroughProgram_.use();
-    }
+       glBindFramebuffer(GL_DRAW_FRAMEBUFFER,frameBufferID_);
 }
 
 
-void FrameBufferObject::endCapture(bool disablePassThroughShder )
+
+void FrameBufferObject::endCapture()
 {
     glViewport(viewport_[0],viewport_[1],viewport_[2],viewport_[3]);
 
@@ -289,13 +348,10 @@ void FrameBufferObject::endCapture(bool disablePassThroughShder )
 
 void FrameBufferObject::printFramebufferStatus()
 {
-    GLenum status_code = glCheckFramebufferStatus(frameBufferID_);
+    GLenum status_code = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
     switch(status_code)
     {
-        case GL_FRAMEBUFFER_COMPLETE:
-        std::cout << " framebuffer object error : GL_FRAMEBUFFER_COMPLETE"<<std::endl;
-        break;
 
         case GL_FRAMEBUFFER_UNDEFINED:
         std::cout << " framebuffer object error : GL_FRAMEBUFFER_UNDEFINED"<<std::endl;
@@ -356,12 +412,15 @@ void FrameBufferObject::parseModeString(const char *modeString)
         //<--------------------------------------------------->//
         if(strcmp(kv.first.c_str(), "rgba") == 0)
         {
-            colorAttachment_ = true;
-            colorFormat_     = GL_RGBA;
-            colorType_       = GL_UNSIGNED_BYTE;
+            std::cout<<"color attachment :rgba"<<std::endl;
+            colorAttachment_     = true;
+            colorFormat_         = GL_RGBA;
+            colorType_           = GL_UNSIGNED_BYTE;
+
+            internalColorFormat_ = GL_BGRA;
             
-            minFilter_       = GL_LINEAR;
-            magFilter_       = GL_LINEAR;
+            minFilter_           = GL_LINEAR;
+            magFilter_           = GL_LINEAR;
 
             // check if float texture is requested TODO:
             if(strchr(kv.second.c_str(), 't') != NULL)
@@ -369,8 +428,17 @@ void FrameBufferObject::parseModeString(const char *modeString)
             else
                colorAttachmentRenderTexture_ = false;
 
+            if(kv.second.find("8") != kv.second.npos)
+            {
+                std::cout<<"color attachment :rgba 8"<<std::endl;
+                internalColorFormat_ = GL_RGBA8;
+                colorType_           = GL_HALF_FLOAT;
+                floatColorBuffer_    = true;
+            }
+
             if(kv.second.find("16") != kv.second.npos)
             {
+                std::cout<<"color attachment :rgb 16"<<std::endl;
                 internalColorFormat_ = GL_RGBA16;
                 colorType_           = GL_HALF_FLOAT;
                 floatColorBuffer_    = true;
@@ -386,13 +454,20 @@ void FrameBufferObject::parseModeString(const char *modeString)
             /*<--------------------------------------------------->*/
             /*<----------check for mutiple render target---------->*/
             /*<--------------------------------------------------->*/
-            for(int i = 0; i < 16; i++)
+            for(int i = 2; i <= 16; i++)
             {
-                char *param ;
+                std::string str = std::to_string(i) + "x";
+                const char *param  = str.c_str();
                 if(kv.second.find(param) != kv.second.npos )
-                   numClorAttachment_ =  i;
+                {
+                    numClorAttachment_ = i;
+                    break;
+                }
             }
         }
+        //<--------------------------------------------------->//
+        //<-----------handle RGB color attachment------------->//
+        //<--------------------------------------------------->//
         else if(strcmp(kv.first.c_str(), "rgb") == 0)
         {
             colorAttachment_ = true;
@@ -417,8 +492,11 @@ void FrameBufferObject::parseModeString(const char *modeString)
 
             if(kv.second.find("32") != kv.second.npos)
             {
-
+                internalColorFormat_ = GL_RGBA32F;
+                colorType_           = GL_FLOAT;
                 // linear filter is not supported for 32 framebuffer objects
+                minFilter_           = GL_NEAREST;
+                magFilter_           = GL_NEAREST;
                 floatColorBuffer_   = true;
             }
 
@@ -440,7 +518,7 @@ void FrameBufferObject::parseModeString(const char *modeString)
         {
             depthAttachment_     = true;
             depthFormat_         = GL_DEPTH_COMPONENT;
-            depthType_           = GL_UNSIGNED_BYTE;
+            depthType_           = GL_FLOAT;
 
             internalDepthFormat_ = GL_DEPTH_COMPONENT24;
 
@@ -476,12 +554,20 @@ void FrameBufferObject::parseModeString(const char *modeString)
     }
 }
 
+bool FrameBufferObject::checkFramebufferStatus()
+{
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+       return true;
+    else
+       return false;
+}
+
 FrameBufferObject::KeyVal FrameBufferObject::getKeyValuePair(std::string token)
 {
     std::string::size_type pos = 0;
     if((pos = token.find("=")) != token.npos)
     {
-        return std::make_pair(token.substr(0,pos),token.substr(pos+1));
+        return std::make_pair(token.substr(0,pos),token.substr(pos+1,token.length()-pos+1));
     }
     else
         return std::make_pair(token,"");

@@ -13,18 +13,18 @@ class FrameBufferObject
 {
     public:
         // construct function
-        FrameBufferObject();
+        FrameBufferObject(const char *modeString);
 
         ~FrameBufferObject();
 
         // initialize the framebuffers and textures
         bool           initialize(unsigned int width,unsigned int height);
 
-        bool           reinitialize(unsigned int width,unsigned int height);
+        bool           reinitialize(unsigned int width,unsigned int height,const char *modeString = "rgb=16t depth=24t");
 
-        void           beginCapture(bool enablePassThroughShder = true);
+        void           beginCapture();
 
-        void           endCapture(bool disablePassThroughShder = true);
+        void           endCapture();
 
         // get width of the framebuffer
         unsigned int   getWidth(){return width_; }
@@ -32,6 +32,7 @@ class FrameBufferObject
         // get height of the framebuffer
         unsigned int   getHeight(){return height_;}
 
+        GLuint         getFrameBufferID(){ return frameBufferID_; }
         // get the texture id of the depth attachment
         GLuint         getDepthAttachment(){ return depthAttachmentID_; }
 
@@ -49,6 +50,7 @@ class FrameBufferObject
 
         void		   printFramebufferStatus();
 
+        bool           checkFramebufferStatus();
     protected:
         // texture target, default: GL_TEXTURE_RECTANGLE_ARB
         GLenum          textureTarget_;
@@ -61,6 +63,8 @@ class FrameBufferObject
 
         // type of the color attachment, defualt: GL_UNSIGNED_BYTE
         GLenum          colorType_;
+
+        GLenum          colorAttachmentDepth_;
 
         // format of the depth textures,default: GL_DEPTH_COMPONENT
         GLenum          depthFormat_;
@@ -90,6 +94,9 @@ class FrameBufferObject
 
         // framebuffer initialized ?
         bool            initialized_;
+
+        // framebuffer extension supported ?
+        bool            extensionSupported_;
 
         // use color attachment?
         bool            colorAttachment_;
@@ -133,18 +140,19 @@ class FrameBufferObject
         // save viewport before setting new one to restore it later
         GLint           viewport_[4];
 
-        Program         passThroughProgram_;
+        // Program         passThroughProgram_;
 
         // indicates if color buffer is a float texture
         bool            floatColorBuffer_;
 
         private:
 
-        /// parse the mode string and set configuration
+        // parse the mode string and set configuration
         void			parseModeString(const char *modeString);
 
         typedef std::pair<std::string, std::string> KeyVal;
-        /// get the key=value pair of a single token from the mode string
+
+        // get the key=value pair of a single token from the mode string
         KeyVal			getKeyValuePair(std::string token);
 };
 #endif

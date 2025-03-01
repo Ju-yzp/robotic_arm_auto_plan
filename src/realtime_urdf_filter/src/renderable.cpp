@@ -242,7 +242,7 @@ namespace realtime_urdf_filter {
     height(h),
     lenght(len)
     {
-        // createBox();
+        createBox();
     }
 
     RenderableBox::~RenderableBox()

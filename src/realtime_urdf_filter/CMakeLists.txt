@@ -45,8 +45,9 @@ find_package(tf2_ros REQUIRED)
 add_executable(urdf_filter
 src/main.cpp
 src/renderable.cpp
-src/urdf_renderable.cpp
-src/shader_wrapper.cpp)
+# src/urdf_renderable.cpp
+src/shader_wrapper.cpp
+src/framebufferObject.cpp)
 
 ament_target_dependencies(
 urdf_filter

@@ -14,8 +14,7 @@ def generate_launch_description():
         executable='urdf_filter',
         namespace='',
         output='screen',
-        emulate_tty=True,
-        parameters=[config],
+        emulate_tty=True
     )
 
     return LaunchDescription([rm_serial_driver_node])

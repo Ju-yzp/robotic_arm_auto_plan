@@ -46,7 +46,7 @@ namespace realtime_urdf_filter {
         public:
         RenderableCylinder(float h,float r);
         ~RenderableCylinder();
-        virtual void render();
+        void render();
         float height,radius;
         protected:
         void createCylinder();
@@ -57,7 +57,7 @@ namespace realtime_urdf_filter {
         public:
         RenderableSphere(float r);
         ~RenderableSphere();
-        virtual void render();
+        void render();
         float radius;
         protected:
         void createSphere();
@@ -68,7 +68,7 @@ namespace realtime_urdf_filter {
         public:
         RenderableBox(float w,float h,float len);
         ~RenderableBox();
-        virtual void render();
+        void render();
         float width;
         float height;
         float lenght;
