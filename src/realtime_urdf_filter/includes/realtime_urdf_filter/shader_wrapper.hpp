@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 //glm
 #include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
 //cpp
 #include <vector>
 #include <string>
@@ -34,6 +35,7 @@ class Program
     void use();
     bool linkSatus();
     void setMat4(const std::string name,const glm::mat4 value);
+    void setVec4(const std::string name,const glm::vec4 value);
     private:
     unsigned int program_id;
 };

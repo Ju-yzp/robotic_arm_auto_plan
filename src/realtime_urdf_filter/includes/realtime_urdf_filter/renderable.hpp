@@ -13,8 +13,11 @@
 #include <assimp/postprocess.h>
 #include <assimp/mesh.h>
 //tf
+#include <tf2/LinearMath/Quaternion.hpp>
 #include <tf2/LinearMath/Transform.h>
 //urdf
+#include <tf2/LinearMath/Transform.hpp>
+#include <tf2/LinearMath/Vector3.hpp>
 #include <urdf_model/color.h>
 #include <realtime_urdf_filter/shader_wrapper.hpp>
 namespace realtime_urdf_filter {
@@ -30,7 +33,8 @@ namespace realtime_urdf_filter {
         public:
         void applyTransfrom(Program &program);
         std::string name;
-        tf2::Transform link_to_fixed;
+        tf2::Transform link_to_fixed = 
+        tf2::Transform(tf2::Quaternion(0.0,0.0,0.0,1.0f),tf2::Vector3(0.0f,0.0f,0.0f));
         tf2::Transform link_offest;
         urdf::Color color;
         virtual void render() = 0;
@@ -74,6 +78,29 @@ namespace realtime_urdf_filter {
         float lenght;
         protected:
         void createBox();
+    };
+
+    class RenderableMesh:public Renderable
+    {
+        public:
+        RenderableMesh(const std::string &path);
+        ~RenderableMesh();
+        void render();
+        protected:
+        struct Mesh
+        {
+            void initMesh(std::vector<Vertex> &vertices,std::vector<unsigned int> &indices);
+            std::vector<Vertex> vertices;
+            std::vector<unsigned int> indices;
+            unsigned int indices_num;
+            unsigned int vbo;
+            unsigned int vao;
+            unsigned int ebo;
+        };
+        std::vector<Mesh> meshes;
+        void processNode(aiNode *node,const aiScene *scene);
+        void processMesh(aiMesh *mesh, const aiScene *scene);
+
     };
 }
 

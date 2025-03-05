@@ -41,7 +41,7 @@ This project is maintained by the following individuals. We welcome you to conta
 
 | Name | Contact |
 |------|---------|
-| **Jup** | [![GitHub](https://img.shields.io/badge/GitHub-Ju--yzp-181717?logo=github)](https://github.com/Ju-yzp) <br> 📧 Ju230551@outlook.com |
+| **Jup** | [![GitHub](https://img.shields.io/badge/GitHub-Ju--yzp-181717?logo=github)](https://github.com/Ju-yzp) <br> 📧 Jup230551@outlook.com |
 
 
 

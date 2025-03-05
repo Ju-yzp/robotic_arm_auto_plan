@@ -1,21 +1,36 @@
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/vector_float3.hpp>
 //
 #include <realtime_urdf_filter/renderable.hpp>
 //
+#include <tf2/LinearMath/Quaternion.hpp>
 #include <tf2/LinearMath/Scalar.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Transform.hpp>
+#include <tf2/LinearMath/Vector3.hpp>
 #include <vector>
 #include <cassert>
 #include <cmath>
+#include <iostream>
+//assimp
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
+// #include<iostream>
+// #include <iomanip>
 namespace realtime_urdf_filter {
     void Renderable::applyTransfrom(Program &program)
     {
-        glm::mat4 result;
         tf2::Transform tf(link_to_fixed);
-        tf *= link_offest;
+        tf2::Transform rviz_to_gl(tf2::Quaternion(-sqrt(2)/2, 0, 0, sqrt(2)/2),tf2::Vector3(0.0f,0.0f,0.0f));
+        tf = rviz_to_gl * tf * link_offest;
         double scalar[16];
         tf.getOpenGLMatrix(scalar);
+        // model coordiate define: z up,x right,y inside
+        // opengl cooridate define: x right,y up,z forward
+        // so we need to tarnfrom from the rviz2 coordiate to opengl coordinate
+        glm::mat4 result = glm::make_mat4(scalar);
         program.setMat4("model", result);
     }
 
@@ -23,7 +38,7 @@ namespace realtime_urdf_filter {
     :height(h),
     radius(r)
     {
-        // createCylinder();
+        createCylinder();
     }
 
     RenderableCylinder::~RenderableCylinder()
@@ -47,12 +62,13 @@ namespace realtime_urdf_filter {
         vertices.reserve(num * 2 + 4);
         indices.reserve(num * 3);
         //get all points that consist of each of triangle
+        const float half_height = height / 2.0f;
         for(unsigned int count = 0;count < num;count++)
         {
           angle = step * count;
           position.x = radius * cos(angle);
-          position.y = height;
-          position.z = radius * sin(angle);
+          position.z = half_height ;
+          position.y = radius * sin(angle);
 
           normal.x = cos(angle);
           normal.y = 0.0f;
@@ -65,8 +81,8 @@ namespace realtime_urdf_filter {
         {
           angle = step * count;
           position.x = radius * cos(angle);
-          position.y = 0.0f;
-          position.z = radius * sin(angle);
+          position.z = -half_height;
+          position.y = radius * sin(angle);
 
           normal.x = cos(angle);
           normal.y = 0.0f;
@@ -237,7 +253,7 @@ namespace realtime_urdf_filter {
         glBindVertexArray(0);
     }
 
-    RenderableBox::RenderableBox(float w,float h,float len)
+    RenderableBox::RenderableBox(float len,float w,float h)
     :width(w),
     height(h),
     lenght(len)
@@ -261,28 +277,28 @@ namespace realtime_urdf_filter {
         const float half_lenght = lenght / 2.0f;
 
         glm::vec3 normal(0.0f,0.0f,0.0f);
-        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,half_height,-half_width),normal});  //front_right_top
-        box_vertices.push_back(Vertex{glm::vec3(half_lenght,half_height,-half_width),normal});   //front_left_top
-        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,-half_height,-half_width),normal}); //front_right_buttom
-        box_vertices.push_back(Vertex{glm::vec3(half_lenght,-half_height,-half_width),normal});  //front_left_buttom
-        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,half_height,half_width),normal});   //back_right_top
-        box_vertices.push_back(Vertex{glm::vec3(half_lenght,half_height,half_width),normal});    //back_left_top
-        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,-half_height,half_width),normal});  //back_right_buttom
-        box_vertices.push_back(Vertex{glm::vec3(half_lenght,-half_height,half_width),normal});   //back_left_buttom
-
+        box_vertices.push_back(Vertex{glm::vec3(half_lenght,-half_width,half_height),normal});     //front right top
+        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,-half_width,half_height),normal});    //front left  top
+        box_vertices.push_back(Vertex{glm::vec3(half_lenght,-half_width,-half_height),normal});    //front right buttom
+        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,-half_width,-half_height),normal});   //front left  buttom
+        box_vertices.push_back(Vertex{glm::vec3(half_lenght,half_width,half_height),normal});      //back  right top
+        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,half_width,half_height),normal});     //back  left  top
+        box_vertices.push_back(Vertex{glm::vec3(half_lenght,half_width,-half_height),normal});     //back  right buttom
+        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,half_width,-half_height),normal});    //back  left  buttom
+ 
         unsigned int box_indices[] = {
             0,1,3,
-            0,2,3,  //front
+            0,2,3,   //front
             4,5,6,
-            7,5,6,//back
+            7,5,6, //back
            0,1,4,
-           5,1,4,//top
+           5,1,4, //top
            6,7,2,
-           3,7,2,//buttom
+           3,7,2, //buttom
            0,4,2,
-           6,4,2,//right
+           6,4,2, //right
            5,1,7,
-           2,1,7 //left
+           2,1,7  //left
 
         };
         glGenVertexArrays(1,&vao);
@@ -307,5 +323,109 @@ namespace realtime_urdf_filter {
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
         glBindVertexArray(0);       
+    }
+
+    RenderableMesh::RenderableMesh(const std::string &path)
+    {
+        Assimp::Importer importer;
+        const aiScene *scene = importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs);
+        if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+        {
+            std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+            return;
+        }
+        processNode(scene->mRootNode, scene);
+    }
+
+    RenderableMesh::~RenderableMesh()
+    {
+        for(auto &mesh:meshes)
+        {
+            glDeleteVertexArrays(1,&mesh.vao);
+            glDeleteBuffers(1,&mesh.vbo);
+            glDeleteBuffers(1,&mesh.ebo);
+        }
+    }
+
+    void RenderableMesh::processNode(aiNode *node,const aiScene *scene)
+    {
+        for(unsigned int i = 0; i < node->mNumMeshes; i++)
+        {
+            // the node object only contains indices to index the actual objects in the scene. 
+            // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            processMesh(mesh, scene);
+        }
+        // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
+        for(unsigned int i = 0; i < node->mNumChildren; i++)
+        {
+            processNode(node->mChildren[i], scene);
+        }
+    }
+
+    void RenderableMesh::processMesh(aiMesh *mesh, const aiScene *scene)
+    {
+        static const float scale = 0.6f;
+        std::vector<Vertex> vertices;
+        std::vector<unsigned int> indices;
+        for(unsigned int i = 0; i < mesh->mNumVertices; i++)
+        {
+            Vertex vertex;
+            glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
+            // positions
+            vector.x = mesh->mVertices[i].x * scale;
+            vector.y = mesh->mVertices[i].y * scale;
+            vector.z = mesh->mVertices[i].z * scale;
+            vertex.position = vector;
+            // normals
+            if (mesh->HasNormals())
+            {
+                vector.x = mesh->mNormals[i].x;
+                vector.y = mesh->mNormals[i].y;
+                vector.z = mesh->mNormals[i].z;
+                vertex.normal = vector;
+            }
+            vertices.push_back(vertex);
+        } 
+        for(unsigned int i = 0; i < mesh->mNumFaces; i++)
+        {
+            aiFace face = mesh->mFaces[i];
+            // retrieve all indices of the face and store them in the indices vector
+            for(unsigned int j = 0; j < face.mNumIndices; j++)
+                indices.push_back(face.mIndices[j]);        
+        }
+        Mesh m;
+        m.initMesh(vertices,indices);
+        meshes.emplace_back(m);
+    }
+
+    void RenderableMesh::render()
+    {
+        for(auto &mesh:meshes)
+        {
+            glBindVertexArray(mesh.vao);
+            glDrawElements(GL_TRIANGLES,mesh.indices_num,GL_UNSIGNED_INT,0);
+            glBindVertexArray(0);
+        }
+    }
+
+    void RenderableMesh::Mesh::initMesh(std::vector<Vertex> &vertices,std::vector<unsigned int> &indices)
+    {
+        indices_num = static_cast<unsigned int>(indices.size());
+        glGenVertexArrays(1,&vao);
+        glGenBuffers(1,&vbo);
+        glGenBuffers(1,&ebo);
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER,vbo);
+        glBufferData(GL_ARRAY_BUFFER,vertices.size()*sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,indices.size()*sizeof(unsigned int),indices.data(),GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void *)0);
+        glEnableVertexAttribArray(0);
+
+        glBindVertexArray(0);
     }
 }

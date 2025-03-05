@@ -7,7 +7,9 @@
 #include <rclcpp/node_options.hpp>
 //render
 #include <realtime_urdf_filter/renderable.hpp>
+#include <realtime_urdf_filter/shader_wrapper.hpp>
 //tf
+#include <tf2/buffer_core.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 //cpp
@@ -23,7 +25,7 @@ class UrdfRenderable
 {
     public:
     UrdfRenderable(const std::shared_ptr<rclcpp::Node> &node);
-    void render();
+    void render(Program &proogram);
     void updateTransfrom();
     private:
     void getParams();

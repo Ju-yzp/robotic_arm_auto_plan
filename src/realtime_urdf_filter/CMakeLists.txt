@@ -41,11 +41,15 @@ find_package(urdf REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 add_executable(urdf_filter
 src/main.cpp
 src/renderable.cpp
-# src/urdf_renderable.cpp
+src/urdf_filter.cpp
+src/urdf_renderable.cpp
 src/shader_wrapper.cpp
 src/framebufferObject.cpp)
 
@@ -56,6 +60,9 @@ urdf_filter
   "tf2_ros"
   "geometry_msgs"
   "urdf"
+  "image_transport"
+  "cv_bridge"
+  "tf2_geometry_msgs"
   #"OpenGL"
 )
 

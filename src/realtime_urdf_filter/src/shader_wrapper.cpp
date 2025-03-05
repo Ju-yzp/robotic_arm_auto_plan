@@ -1,3 +1,4 @@
+#include "realtime_urdf_filter/renderable.hpp"
 #include <realtime_urdf_filter/shader_wrapper.hpp>
 //stream
 #include <fstream>
@@ -94,4 +95,9 @@ bool Program::linkSatus()
 void Program::setMat4(const std::string name,const glm::mat4 value)
 {
     glUniformMatrix4fv(glGetUniformLocation(program_id,name.c_str()),1,GL_FALSE,&value[0][0]);
+}
+
+void Program::setVec4(const std::string name,const glm::vec4 value)
+{
+    glUniform4fv(glGetUniformLocation(program_id,name.c_str()),1,&value[0]);
 }
