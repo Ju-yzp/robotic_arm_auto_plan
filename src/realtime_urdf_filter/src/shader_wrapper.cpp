@@ -1,4 +1,3 @@
-#include "realtime_urdf_filter/renderable.hpp"
 #include <realtime_urdf_filter/shader_wrapper.hpp>
 //stream
 #include <fstream>
@@ -100,4 +99,14 @@ void Program::setMat4(const std::string name,const glm::mat4 value)
 void Program::setVec4(const std::string name,const glm::vec4 value)
 {
     glUniform4fv(glGetUniformLocation(program_id,name.c_str()),1,&value[0]);
+}
+
+void Program::setVal1i(const std::string name,const int value)
+{
+    glUniform1i(glGetUniformLocation(program_id,name.c_str()),value);
+}
+
+void Program::setVal1f(const std::string name,const float value)
+{
+    glUniform1f(glGetUniformLocation(program_id,name.c_str()),value);
 }

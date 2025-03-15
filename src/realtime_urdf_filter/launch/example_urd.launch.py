@@ -8,7 +8,7 @@ def generate_launch_description():
     robot_description_path = os.path.join(
         get_package_share_directory('realtime_urdf_filter'),
         'urdf',
-        'example.urdf'
+        'a0912.urdf'
     )
 
     # 定义 ROS2 启动节点

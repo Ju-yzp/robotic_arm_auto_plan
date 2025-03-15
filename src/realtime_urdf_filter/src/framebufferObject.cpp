@@ -1,4 +1,5 @@
 //c style
+#include "realtime_urdf_filter/shader_wrapper.hpp"
 #include <cassert>
 #include <cstddef>
 #include <cstring>
@@ -78,6 +79,25 @@ FrameBufferObject::~FrameBufferObject()
     }
 }
 
+void FrameBufferObject::bind(const uint index)
+{
+    glBindTexture(textureTarget_,colorAttachmentId_[index]);
+    glTexParameteri(textureTarget_, GL_TEXTURE_WRAP_S, wrapS_);
+    glTexParameteri(textureTarget_, GL_TEXTURE_WRAP_T, wrapT_);
+    glTexParameteri(textureTarget_, GL_TEXTURE_MIN_FILTER, minFilter_);
+    glTexParameteri(textureTarget_, GL_TEXTURE_MAG_FILTER, magFilter_);
+}
+
+
+void FrameBufferObject::bindDepth()
+{
+    glBindTexture(textureTarget_,depthAttachmentID_);
+    glTexParameteri(textureTarget_, GL_TEXTURE_WRAP_S, wrapS_);
+    glTexParameteri(textureTarget_, GL_TEXTURE_WRAP_T, wrapT_);
+    glTexParameteri(textureTarget_, GL_TEXTURE_MIN_FILTER, minFilter_);
+    glTexParameteri(textureTarget_, GL_TEXTURE_MAG_FILTER, magFilter_);
+}
+
 bool FrameBufferObject::initialize(unsigned int width,unsigned int height)
 {
     if(initialized_)
@@ -119,7 +139,6 @@ bool FrameBufferObject::initialize(unsigned int width,unsigned int height)
                 glTextureParameteri(textureTarget_,GL_TEXTURE_WRAP_S,wrapT_);
                 glTextureParameteri(textureTarget_,GL_TEXTURE_MIN_FILTER,minFilter_);
                 glTextureParameteri(textureTarget_,GL_TEXTURE_MAG_FILTER,magFilter_);
-                glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
 
                 glTexImage2D(textureTarget_,
                              0,
@@ -191,7 +210,6 @@ bool FrameBufferObject::initialize(unsigned int width,unsigned int height)
             glTexParameteri(textureTarget_,GL_TEXTURE_WRAP_T,wrapT_);
             glTextureParameteri(textureTarget_,GL_TEXTURE_MIN_FILTER,minFilter_);
             glTextureParameteri(textureTarget_,GL_TEXTURE_MAG_FILTER,magFilter_);
-            glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
 
             glTexImage2D(textureTarget_,
                           0,
@@ -412,13 +430,13 @@ void FrameBufferObject::parseModeString(const char *modeString)
         //<--------------------------------------------------->//
         if(strcmp(kv.first.c_str(), "rgba") == 0)
         {
-            std::cout<<"color attachment :rgba"<<std::endl;
+            // std::cout<<"color attachment :rgba"<<std::endl;
             colorAttachment_     = true;
             colorFormat_         = GL_RGBA;
             colorType_           = GL_UNSIGNED_BYTE;
 
-            internalColorFormat_ = GL_BGRA;
-            
+            internalColorFormat_ = GL_RGBA;
+            colorAttachmentDepth_ = GL_RGBA8;
             minFilter_           = GL_LINEAR;
             magFilter_           = GL_LINEAR;
 
@@ -438,7 +456,9 @@ void FrameBufferObject::parseModeString(const char *modeString)
 
             if(kv.second.find("16") != kv.second.npos)
             {
-                std::cout<<"color attachment :rgb 16"<<std::endl;
+                // std::cout<<"color attachment :rgb 16"<<std::endl;
+                colorAttachmentDepth_ = GL_RGBA16;
+
                 internalColorFormat_ = GL_RGBA16;
                 colorType_           = GL_HALF_FLOAT;
                 floatColorBuffer_    = true;
@@ -446,8 +466,14 @@ void FrameBufferObject::parseModeString(const char *modeString)
 
             if(kv.second.find("32") != kv.second.npos)
             {
+                colorAttachmentDepth_ = GL_RGBA32F;
+                internalColorFormat_ = GL_RGBA32F;
+                colorType_           = GL_FLOAT;
 
                 // linear filter is not supported for 32 framebuffer objects
+                minFilter_           = GL_NEAREST;
+                magFilter_           = GL_NEAREST;
+
                 floatColorBuffer_   = true;
             }
 
@@ -470,6 +496,7 @@ void FrameBufferObject::parseModeString(const char *modeString)
         //<--------------------------------------------------->//
         else if(strcmp(kv.first.c_str(), "rgb") == 0)
         {
+            colorAttachmentDepth_ = GL_RGB8;
             colorAttachment_ = true;
             colorFormat_     = GL_RGB;
             colorType_       = GL_UNSIGNED_BYTE;
@@ -485,8 +512,9 @@ void FrameBufferObject::parseModeString(const char *modeString)
 
             if(kv.second.find("16") != kv.second.npos)
             {
-                internalColorFormat_ = GL_RGBA16;
+                internalColorFormat_ = GL_RGBA16F;
                 colorType_           = GL_HALF_FLOAT;
+                colorAttachmentDepth_ = GL_RGB16;
                 floatColorBuffer_    = true;
             }
 
@@ -497,6 +525,7 @@ void FrameBufferObject::parseModeString(const char *modeString)
                 // linear filter is not supported for 32 framebuffer objects
                 minFilter_           = GL_NEAREST;
                 magFilter_           = GL_NEAREST;
+                colorAttachmentDepth_ = GL_RGB32F;
                 floatColorBuffer_   = true;
             }
 

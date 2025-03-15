@@ -26,6 +26,10 @@ class FrameBufferObject
 
         void           endCapture();
 
+        void           bind(const uint index);
+
+        void           bindDepth();
+        
         // get width of the framebuffer
         unsigned int   getWidth(){return width_; }
 

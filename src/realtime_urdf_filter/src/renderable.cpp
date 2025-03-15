@@ -21,17 +21,16 @@
 // #include <iomanip>
 namespace realtime_urdf_filter {
     void Renderable::applyTransfrom(Program &program)
-    {
+    {        
         tf2::Transform tf(link_to_fixed);
-        tf2::Transform rviz_to_gl(tf2::Quaternion(-sqrt(2)/2, 0, 0, sqrt(2)/2),tf2::Vector3(0.0f,0.0f,0.0f));
-        tf = rviz_to_gl * tf * link_offest;
-        double scalar[16];
-        tf.getOpenGLMatrix(scalar);
+        tf = tf * link_offest;
         // model coordiate define: z up,x right,y inside
         // opengl cooridate define: x right,y up,z forward
         // so we need to tarnfrom from the rviz2 coordiate to opengl coordinate
-        glm::mat4 result = glm::make_mat4(scalar);
-        program.setMat4("model", result);
+        double glTf[16];
+        tf.getOpenGLMatrix(glTf);
+        glm::mat4 model = glm::make_mat4(glTf);
+        program.setMat4("model", model);
     }
 
     RenderableCylinder::RenderableCylinder(float h,float r)
@@ -277,14 +276,14 @@ namespace realtime_urdf_filter {
         const float half_lenght = lenght / 2.0f;
 
         glm::vec3 normal(0.0f,0.0f,0.0f);
-        box_vertices.push_back(Vertex{glm::vec3(half_lenght,-half_width,half_height),normal});     //front right top
-        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,-half_width,half_height),normal});    //front left  top
-        box_vertices.push_back(Vertex{glm::vec3(half_lenght,-half_width,-half_height),normal});    //front right buttom
-        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,-half_width,-half_height),normal});   //front left  buttom
-        box_vertices.push_back(Vertex{glm::vec3(half_lenght,half_width,half_height),normal});      //back  right top
-        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,half_width,half_height),normal});     //back  left  top
-        box_vertices.push_back(Vertex{glm::vec3(half_lenght,half_width,-half_height),normal});     //back  right buttom
-        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,half_width,-half_height),normal});    //back  left  buttom
+        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,-half_width,half_height),normal});     //front right top
+        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,half_width,half_height),normal});    //front left  top
+        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,-half_width,-half_height),normal});    //front right buttom
+        box_vertices.push_back(Vertex{glm::vec3(-half_lenght,half_width,-half_height),normal});   //front left  buttom
+        box_vertices.push_back(Vertex{glm::vec3(half_lenght,-half_width,half_height),normal});      //back  right top
+        box_vertices.push_back(Vertex{glm::vec3(half_lenght,half_width,half_height),normal});     //back  left  top
+        box_vertices.push_back(Vertex{glm::vec3(half_lenght,-half_width,-half_height),normal});     //back  right buttom
+        box_vertices.push_back(Vertex{glm::vec3(half_lenght,half_width,-half_height),normal});    //back  left  buttom
  
         unsigned int box_indices[] = {
             0,1,3,

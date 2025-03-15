@@ -1,17 +1,19 @@
 //cpp
-
 #include <cstddef>
 #include <memory>
 //ros2
 #include <rclcpp/duration.hpp>
+#include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 //
+#include <rclcpp/node.hpp>
 #include <rclcpp/parameter_value.hpp>
+#include <rclcpp/time.hpp>
 #include <realtime_urdf_filter/renderable.hpp>
 #include <realtime_urdf_filter/urdf_renderable.hpp>
 //urdf
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Transform.hpp>
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/exceptions.h>
 #include <tf2/convert.h>
@@ -19,24 +21,36 @@
 #include <urdf_model/link.h>
 #include <urdf_model/pose.h>
 #include <urdf_model/types.h>
-//tf
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>  
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
 namespace  realtime_urdf_filter
 {
-UrdfRenderable::UrdfRenderable(const std::shared_ptr<rclcpp::Node> &node):
-node_(node)
-{
-    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
-    tf_ = std::make_unique<tf2_ros::TransformListener>(* tf_buffer_);
-    getParams();
-    loadModel();
-}
 
-void UrdfRenderable::render(Program &program)
+UrdfRenderable::UrdfRenderable(std::string model_description,
+                   std::string cam_frame,
+                   std::string fixed_frame,
+                   const std::string &geometry_type,
+                   double scale,
+                   const std::unordered_set<std::string> &ignore,
+                //    const tf2_ros::Buffer::SharedPtr tf_buffer,
+                   rclcpp::Node *node)
+                   :model_desc_(model_description),
+                   cam_frame_(cam_frame),
+                   fixed_frame_(fixed_frame),
+                   scale_(scale),
+                   ignore_links_(ignore),
+                //    tf_buffer_(tf_buffer),
+                   node_(node)
+                   {
+                    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
+                    tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
+                     loadModel();
+                   }
+
+void UrdfRenderable::render(Program &program, rclcpp::Time timestamp)
 {
-     updateTransfrom();// defualt not use in test 
+     updateTransfrom(timestamp);// defualt not use in test 
     for(const auto &render:renders)
     {
         auto &color = render->color;
@@ -46,49 +60,19 @@ void UrdfRenderable::render(Program &program)
     }
 }
 
-void UrdfRenderable::getParams()
-{
-    std::string model_file_path = "/home/zy_jp/robotic_arm_auto_plan/src/realtime_urdf_filter/urdf/example.urdf";
-    try {
-        model_desc_ = node_->declare_parameter("model_description",model_file_path);
-    }catch(rclcpp::ParameterTypeException &e)
-    {
-        RCLCPP_INFO(node_->get_logger(),"model description %s",e.what());
-    }
-    try{
-        geometry_type_ = node_->declare_parameter("geometry_type","visual");
-    }catch(rclcpp::ParameterTypeException &e)
-    {
-        RCLCPP_INFO(node_->get_logger(),"geometry_type %s",e.what());
-    }
-
-    try{
-        fixed_frame_ = node_->declare_parameter("fixed_frame","base_link");
-    }catch(rclcpp::ParameterTypeException &e)
-    {
-        RCLCPP_INFO(node_->get_logger(),"fixed frame %s",e.what());
-    }
-    auto links = node_->declare_parameter("ignore",std::vector<std::string>());
-
-    for(const auto &ignore:links)
-    {
-        ignore_links_.insert(ignore);
-    }
-}
-
-void UrdfRenderable::updateTransfrom()
+void UrdfRenderable::updateTransfrom(rclcpp::Time timestamp)
 {
     
     for(auto & render:renders)
     {
         try
         {
+            if(ignore_links_.count(render->name))
+               return ;
             geometry_msgs::msg::TransformStamped tf_stamped;
-            if(render->name == fixed_frame_)
-               continue;
-            tf_stamped = tf_buffer_->lookupTransform(fixed_frame_,render->name,node_->now(),rclcpp::Duration::from_seconds(0.005));
+            tf_stamped = tf_buffer_->lookupTransform(fixed_frame_,render->name,timestamp,rclcpp::Duration(0,500));
             tf2::fromMsg(tf_stamped.transform,render->link_to_fixed);
-            // RCLCPP_INFO(node_->get_logger(),"!");
+            // RCLCPP_INFO(node_->get_logger()," %s -> %s",render->name.c_str(),fixed_frame_.c_str());
         }catch(tf2::TransformException &ex)
         {
             RCLCPP_DEBUG(node_->get_logger(),"%s",ex.what());
@@ -174,18 +158,32 @@ void UrdfRenderable::processLink(const urdf::LinkSharedPtr &link)
         }
         else if(geometry->type == urdf::Geometry::MESH)
         {
-
+            const urdf::MeshConstSharedPtr mesh = std::dynamic_pointer_cast<const urdf::Mesh>(geometry);
+            if(mesh->filename.find("package://") == 0)
+            {
+                std::string package_path = "/home/zy_jp/robotic_arm_auto_plan/src/";
+                std::string filename = package_path + mesh->filename.substr(10);
+                render = std::make_shared<RenderableMesh>(filename);
+                RCLCPP_INFO(node_->get_logger(),"file %s",filename.c_str());
+            }
+            else {
+                render = std::make_shared<RenderableMesh>(mesh->filename);
+                RCLCPP_INFO(node_->get_logger(),"file %s",mesh->filename.c_str());
+            }
         }
         else {
-        return ;
+            RCLCPP_WARN(node_->get_logger(),"Invaild geometry type");
+            continue;
         }
         render->name = link->name;
 
-        RCLCPP_INFO(node_->get_logger(),"frame %s",render->name.c_str());
+        RCLCPP_INFO(node_->get_logger(),"link name is %s",link->name.c_str());
         //set up transform imformation
         const urdf::Vector3 position = origin.position;
         const urdf::Rotation rotation = origin.rotation;
 
+        RCLCPP_INFO(node_->get_logger(),"position offest is x:%f y:%f z:%f",position.x,position.y,position.z);
+        RCLCPP_INFO(node_->get_logger(),"rotation offest is x:%f y:%f z:%f w:%f",rotation.x,rotation.y,rotation.z,rotation.w);
         render->link_offest = tf2::Transform(
             tf2::Quaternion(rotation.x,rotation.y,rotation.z,rotation.w).normalize(),
             tf2::Vector3(position.x,position.y,position.z));
@@ -194,6 +192,12 @@ void UrdfRenderable::processLink(const urdf::LinkSharedPtr &link)
         if(material)
         {
             render->color = material->color;
+        }
+        else {
+            render->color.a = 1.0;
+            render->color.r = 1.0;
+            render->color.g = 0.0;
+            render->color.b = 0.0;
         }
         renders.emplace_back(render);
     }

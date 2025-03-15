@@ -48,7 +48,6 @@ find_package(tf2_geometry_msgs REQUIRED)
 add_executable(urdf_filter
 src/main.cpp
 src/renderable.cpp
-src/urdf_filter.cpp
 src/urdf_renderable.cpp
 src/shader_wrapper.cpp
 src/framebufferObject.cpp)
@@ -63,7 +62,6 @@ urdf_filter
   "image_transport"
   "cv_bridge"
   "tf2_geometry_msgs"
-  #"OpenGL"
 )
 
 target_link_libraries(
@@ -77,6 +75,6 @@ install(TARGETS urdf_filter
 DESTINATION lib/${PROJECT_NAME})
 
 install(
-  DIRECTORY launch config urdf 
+  DIRECTORY launch config urdf description
   DESTINATION share/${PROJECT_NAME}
 )
