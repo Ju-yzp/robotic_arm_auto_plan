@@ -67,12 +67,9 @@ void UrdfRenderable::updateTransfrom(rclcpp::Time timestamp)
     {
         try
         {
-            if(ignore_links_.count(render->name))
-               return ;
             geometry_msgs::msg::TransformStamped tf_stamped;
-            tf_stamped = tf_buffer_->lookupTransform(fixed_frame_,render->name,timestamp,rclcpp::Duration(0,500));
+            tf_stamped = tf_buffer_->lookupTransform(fixed_frame_,render->name,timestamp,rclcpp::Duration(0,1000));
             tf2::fromMsg(tf_stamped.transform,render->link_to_fixed);
-            // RCLCPP_INFO(node_->get_logger()," %s -> %s",render->name.c_str(),fixed_frame_.c_str());
         }catch(tf2::TransformException &ex)
         {
             RCLCPP_DEBUG(node_->get_logger(),"%s",ex.what());
@@ -163,11 +160,11 @@ void UrdfRenderable::processLink(const urdf::LinkSharedPtr &link)
             {
                 std::string package_path = "/home/zy_jp/robotic_arm_auto_plan/src/";
                 std::string filename = package_path + mesh->filename.substr(10);
-                render = std::make_shared<RenderableMesh>(filename);
+                render = std::make_shared<RenderableMesh>(filename,0.001);
                 RCLCPP_INFO(node_->get_logger(),"file %s",filename.c_str());
             }
             else {
-                render = std::make_shared<RenderableMesh>(mesh->filename);
+                render = std::make_shared<RenderableMesh>(mesh->filename,0.001);
                 RCLCPP_INFO(node_->get_logger(),"file %s",mesh->filename.c_str());
             }
         }

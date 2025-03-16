@@ -83,7 +83,7 @@ namespace realtime_urdf_filter {
     class RenderableMesh:public Renderable
     {
         public:
-        RenderableMesh(const std::string &path);
+        RenderableMesh(const std::string &path,double scale);
         ~RenderableMesh();
         void render();
         protected:
@@ -98,6 +98,7 @@ namespace realtime_urdf_filter {
             unsigned int ebo;
         };
         std::vector<Mesh> meshes;
+        double scale_;
         void processNode(aiNode *node,const aiScene *scene);
         void processMesh(aiMesh *mesh, const aiScene *scene);
 

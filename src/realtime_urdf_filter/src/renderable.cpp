@@ -324,7 +324,8 @@ namespace realtime_urdf_filter {
         glBindVertexArray(0);       
     }
 
-    RenderableMesh::RenderableMesh(const std::string &path)
+    RenderableMesh::RenderableMesh(const std::string &path,double scale)
+    :scale_(scale)
     {
         Assimp::Importer importer;
         const aiScene *scene = importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -364,7 +365,6 @@ namespace realtime_urdf_filter {
 
     void RenderableMesh::processMesh(aiMesh *mesh, const aiScene *scene)
     {
-        static const float scale = 0.6f;
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -372,9 +372,9 @@ namespace realtime_urdf_filter {
             Vertex vertex;
             glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
             // positions
-            vector.x = mesh->mVertices[i].x * scale;
-            vector.y = mesh->mVertices[i].y * scale;
-            vector.z = mesh->mVertices[i].z * scale;
+            vector.x = mesh->mVertices[i].x * scale_;
+            vector.y = mesh->mVertices[i].y * scale_;
+            vector.z = mesh->mVertices[i].z * scale_;
             vertex.position = vector;
             // normals
             if (mesh->HasNormals())

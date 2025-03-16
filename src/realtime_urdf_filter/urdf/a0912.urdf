@@ -23,7 +23,10 @@
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://realtime_urdf_filter/description/meshes/a0912_blue/A0912_0_0.dae" scale="0.001 0.001 0.001"/>
-        </geometry>
+      </geometry>
+      <material name="w">
+        <color rgba="0.2 0.5 1.0 1.0"/>
+      </material>
     </visual>
     <collision>
       <geometry>
@@ -65,7 +68,7 @@
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://realtime_urdf_filter/description/meshes/a0912_blue/A0912_1_1.dae" scale="0.001 0.001 0.001"/>
-      </geometry>
+      </geometry>  
     </visual>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -105,6 +108,9 @@
       <geometry>
         <mesh filename="package://realtime_urdf_filter/description/meshes/a0912_blue/A0912_2_0.dae" scale="0.001 0.001 0.001"/>
       </geometry>
+            <material name="w">
+        <color rgba="0.5 1.0 0.7 1.0"/>
+      </material>
     </visual>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>

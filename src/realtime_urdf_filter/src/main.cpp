@@ -85,20 +85,21 @@ int main(int argc,char **argv)
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         program.use();
 
-        glm::mat4 rostogl = glm::mat4( 0.0f,0.0f,-1.0f,0.0f,
-                                       -1.0f, 0.0f,0.0f,0.0f,
+        glm::mat4 rostogl = glm::mat4( -1.0f,0.0f,0.0f,0.0f,
+                                       0.0f, 0.0f,-1.0f,0.0f,
                                       0.0f, 1.0f,0.0f,0.0f,
                                        0.0f, 0.0f,0.0f,1.0f);
+        glm::mat4 scale = glm::mat4(1.0f);
 
-        glm::mat4 scale = glm::mat4( 0.001f,0.0f,0.0f,0.0f,
-                                        0.0f, 0.001f,0.0f,0.0f,
-                                       0.0f, 0.0f,0.001f,0.0f,
-                                        0.0f, 0.0f,0.0f,1.0f);
+        // glm::mat4 scale = glm::mat4( 0.002f,0.0f,0.0f,0.0f,
+        //                                 0.0f, 0.002f,0.0f,0.0f,
+        //                                0.0f, 0.0f,0.002f,0.0f,
+        //                                 0.0f, 0.0f,0.0f,1.0f);
                                         
         glm::mat4 projection = glm::mat4( 1.0f,0.0f,0.0f,0.0f,
                                             0.0f, 1.0f,0.0f,0.0f,
                                            0.0f, 0.0f,1.0f,0.0f,
-                                            0.0f, 0.0f,-13.0f,1.0f);
+                                            0.0f, 0.0f,0.0f,1.0f);
         program.setMat4("rostogl", rostogl);
         program.setMat4("projection", projection);
         program.setMat4("view", scale);
