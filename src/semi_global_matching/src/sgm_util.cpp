@@ -201,7 +201,7 @@ void Util::computeAggregationVertical(semi_global_matching::SemiGlobalMatching *
 
 uint8_t Util::Hamming(uint32_t x, uint32_t y)
 {
-    uint32_t dist,value = x ^ y;
+    uint32_t dist=0u,value = x ^ y;
     while (value) {
            dist++;
            value &= value - 1;

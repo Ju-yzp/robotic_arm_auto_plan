@@ -38,7 +38,7 @@ void initialize(const int width,const int height);
 
 void releaseResource();
 
-void computeCensus(const int flag);
+void computeCensus(const bool flag);
 
 void computeCost();
 

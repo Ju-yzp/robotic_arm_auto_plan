@@ -2,20 +2,23 @@
 #define  SEMI_GOLBAL_MATCHING_OPTION_H_
 
 #include <cassert>
+#include <stdexcept>
 
 namespace semi_global_matching {
 
 class MatchOption
 {
     public:
-    explicit MatchOption(int min_disparity, int max_disparity , int factor ,
+    explicit MatchOption(int min_disparity, int max_disparity , int factor,int penalty_factor,
     bool multi_thread_accel = true):
     min_disparity_(min_disparity),
     max_disparity_(max_disparity),
     factor_(factor),
+    penalty_factor_(penalty_factor),
     multi_thread_accel_(multi_thread_accel)
     {
-        assert(max_disparity > min_disparity && min_disparity >= 0);
+        if(max_disparity <= min_disparity || min_disparity < 0)
+           throw std::runtime_error("Invaild disparity value");
         disparity_range_ = max_disparity_ - min_disparity_;
     }
 
