@@ -70,18 +70,18 @@ void SemiGlobalMatching::match(std::shared_ptr<cv::Mat> left_img, std::shared_pt
     computeCost();
     {
     auto start = std::chrono::system_clock::now();
-    // sgm_util::Util::computeAggregationHorizontal(this, cost_aggrs_[0],1);
+    sgm_util::Util::computeAggregationHorizontal(this, cost_aggrs_[0],1);
     // sgm_util::Util::computeAggregationHorizontal(this, cost_aggrs_[1],-1);
     // sgm_util::Util::computeAggregationVertical(this,cost_aggrs_[2], 1);
     // sgm_util::Util::computeAggregationVertical(this,cost_aggrs_[3], -1);
-    std::thread t1(&sgm_util::Util::computeAggregationHorizontal,this, cost_aggrs_[0],1);
-    std::thread t2(&sgm_util::Util::computeAggregationHorizontal,this, cost_aggrs_[1],-1);
+    // std::thread t1(&sgm_util::Util::computeAggregationHorizontal,this, cost_aggrs_[0],1);
+    // std::thread t2(&sgm_util::Util::computeAggregationHorizontal,this, cost_aggrs_[1],-1);
     // std::thread t3(&sgm_util::Util::computeAggregationVertical,this,cost_aggrs_[2], 1);
     // std::thread t4(sgm_util::Util::computeAggregationVertical,this,cost_aggrs_[3], -1);
-    if(t1.joinable())
-       t1.join();
-    if(t2.joinable())
-       t2.join();
+    // if(t1.joinable())
+    //    t1.join();
+    // if(t2.joinable())
+    //    t2.join();
     // if(t3.joinable())
     //    t3.join();
     // if(t4.joinable())

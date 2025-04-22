@@ -40,7 +40,7 @@ void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching
     
     uint16_t temp[16];
 
-    std::vector<uint16_t> p1_array(disparity_range+2,static_cast<uint16_t>(p1));
+    std::vector<uint16_t> p1_array(disparity_range,static_cast<uint16_t>(p1));
     for(int32_t i = 0u; i < height;i++)
     {
         auto cost_aggr_row = direction ? 
@@ -95,25 +95,24 @@ void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching
 
                 __m256i a1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&p1_array[0]));
                 
-
-                __m256i l3 = _mm256_add_epi16(s3,a1);
-                __m256i l2 = _mm256_add_epi16(s1,a1);
+                __m256i l3 = _mm256_adds_epu16(s3,a1);
+                __m256i l2 = _mm256_adds_epu16(s1,a1);
 
                 __m256i min1 = _mm256_min_epu16(l2,l3);
                 __m256i min2 = _mm256_min_epu16(min1,s2);
                 /* 求l4 */
                 __m256i a2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&p2_array[0]));
-                __m256i a3 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&cost_array[0]));
-                
+                                __m256i a3 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&cost_array[0]));
+
                 __m256i max2 = _mm256_max_epu16(a1,a2);
-                __m256i s5 = _mm256_add_epi16(max2,a3);
+                __m256i s5 = _mm256_adds_epu16(max2,a3);
                 // 得到最小的数
                 __m256i min3 = _mm256_min_epu16(min2,s5);
 
                 __m128i vd = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&cost_init_row[d]));
                 __m256i s4 = _mm256_cvtepi8_epi16(vd);
-                __m256i l1 = _mm256_add_epi16(min3,s4);
-                __m256i l4 = _mm256_sub_epi16(l1,a3);
+                __m256i l1 = _mm256_adds_epu16(min3,s4);
+                __m256i l4 = _mm256_subs_epu16(l1,a3);
 
                 _mm256_storeu_si256(reinterpret_cast<__m256i *>(&temp[0]),l4);
                 for(int i = 0;i < 16;i++)
@@ -121,9 +120,7 @@ void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching
                     uint8_t val = static_cast<uint8_t>(temp[i]);
                     cost_aggr_row[d+i] = val;
                     // std::cout<<static_cast<int>(val)<<std::endl;
-                    if(val < min_cost)
-                       min_cost = val;
-                   
+                    min_cost = std::min(val,min_cost);           
                 }
             }
             for(;d < disparity_range;d++)
