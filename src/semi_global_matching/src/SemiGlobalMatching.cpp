@@ -5,6 +5,7 @@
 #include <cstring>
 #include <memory>
 #include <thread>
+#include <new>
 
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/highgui.hpp>
@@ -15,9 +16,11 @@
 #include <semi_global_matching/sgm_util.h>
 
 #define RELEASE_RESOURCE(ptr) if(ptr != nullptr)\
-                                 delete[] ptr;
+                                 delete [] ptr;
 
 namespace semi_global_matching {
+
+constexpr size_t alignment = 32;
 
 SemiGlobalMatching::SemiGlobalMatching(MatchOption &option)
 :option_(option),
@@ -168,7 +171,6 @@ void SemiGlobalMatching::initialize(const int width,const int height)
 {
     width_ = width;
     height_ = height;
-
     // 分配内存
     left_census_  = new uint32_t[width_ * height_];
     right_census_ = new uint32_t[width_ * height_];

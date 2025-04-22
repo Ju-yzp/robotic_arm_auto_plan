@@ -81,10 +81,14 @@ void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching
             uint16_t p2_ = static_cast<uint16_t>(p2_init/(std::abs(gray - last_gray)+1));
             std::vector<uint16_t> p2_array(16,p2_);
             std::vector<uint16_t> cost_array(16,static_cast<uint16_t>(last_path_min_cost));
-            
+
+            __m256i a1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&p1_array[0]));
+            __m256i a2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&p2_array[0]));
+            __m256i a3 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&cost_array[0]));
+
             for(; d + 16< disparity_range ;d+=16)
             {
-                /* 求得l1,l2,l3较小的那一项*/
+                // /* 求得l1,l2,l3较小的那一项*/
                 __m128i va = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&last_cost_path[d]));
                 __m128i vb = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&last_cost_path[d+1]));
                 __m128i vc = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&last_cost_path[d+2]));
@@ -92,8 +96,6 @@ void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching
                 __m256i s1 = _mm256_cvtepi8_epi16(va);
                 __m256i s2 = _mm256_cvtepi8_epi16(vb);
                 __m256i s3 = _mm256_cvtepi8_epi16(vc);
-
-                __m256i a1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&p1_array[0]));
                 
                 __m256i l3 = _mm256_adds_epu16(s3,a1);
                 __m256i l2 = _mm256_adds_epu16(s1,a1);
@@ -101,9 +103,6 @@ void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching
                 __m256i min1 = _mm256_min_epu16(l2,l3);
                 __m256i min2 = _mm256_min_epu16(min1,s2);
                 /* 求l4 */
-                __m256i a2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&p2_array[0]));
-                                __m256i a3 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&cost_array[0]));
-
                 __m256i max2 = _mm256_max_epu16(a1,a2);
                 __m256i s5 = _mm256_adds_epu16(max2,a3);
                 // 得到最小的数
@@ -114,13 +113,13 @@ void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching
                 __m256i l1 = _mm256_adds_epu16(min3,s4);
                 __m256i l4 = _mm256_subs_epu16(l1,a3);
 
+                // __m128i result = _mm256_castsi256_si128(l4);
+                // _mm_storeu_si128(reinterpret_cast<__m128i *>(&cost_aggr_row[d]),result);
                 _mm256_storeu_si256(reinterpret_cast<__m256i *>(&temp[0]),l4);
                 for(int i = 0;i < 16;i++)
                 {
                     uint8_t val = static_cast<uint8_t>(temp[i]);
-                    cost_aggr_row[d+i] = val;
-                    // std::cout<<static_cast<int>(val)<<std::endl;
-                    min_cost = std::min(val,min_cost);           
+                    cost_aggr_row[d+i] = val;           
                 }
             }
             for(;d < disparity_range;d++)
@@ -137,7 +136,10 @@ void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching
                 const uint8_t cost_s = cost + static_cast<uint8_t>(std::min(std::min(l1,l2),std::min(l3,l4)))-last_path_min_cost;
 
                 cost_aggr_row[d] = cost_s;
-                min_cost = std::min(min_cost,cost_s);
+            }
+            for(int32_t k = 0 ;k < disparity_range;k++)
+            {
+                min_cost = std::min(cost_aggr_row[k],min_cost);
             }
             // 拷贝当前的路径代价作为下一次的
             last_path_min_cost = min_cost;
