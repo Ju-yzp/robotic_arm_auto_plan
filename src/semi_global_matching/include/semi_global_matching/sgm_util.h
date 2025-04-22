@@ -11,11 +11,8 @@ public:
 // 在水平方向的像素进行代价聚合
 static void computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching *sgm ,uint8_t *cost,bool forward);
 
-// 在对角线方向的像素进行代价聚合
-static void computeAggregationVertical(semi_global_matching::SemiGlobalMatching *sgm,uint8_t *cost,bool forward);
-
 // 在竖直方向的像素进行代价聚合
-// static void computeAggregationVertical(semi_global_matching::SemiGlobalMatching *sgm);
+static void computeAggregationVertical(semi_global_matching::SemiGlobalMatching *sgm,uint8_t *cost,bool forward);
 
 static uint8_t Hamming(uint32_t x, uint32_t y);
 };

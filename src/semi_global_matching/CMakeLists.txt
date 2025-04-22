@@ -13,7 +13,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
 endif()
 
-
 ## Export compile commands for clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -21,7 +20,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     # 启用 AddressSanitizer
     add_compile_options(-fsanitize=address)
     add_link_options(-fsanitize=address)
-    
+     
     # 添加调试符号（方便定位问题）
     add_compile_options(-g)
     

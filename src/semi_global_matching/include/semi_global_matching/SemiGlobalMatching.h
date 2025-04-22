@@ -57,6 +57,9 @@ std::vector<uint8_t *> cost_aggrs_;
 std::shared_ptr<cv::Mat> left_img_;
 std::shared_ptr<cv::Mat> right_img_;
 
+uint8_t *clip_left_img_;
+uint8_t *clip_right_img_;
+
 // std::vector<
 // 
 MatchOption option_;
