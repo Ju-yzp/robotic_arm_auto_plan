@@ -13,6 +13,17 @@
 #include <vector>
 
 namespace sgm_util {
+
+static const uint8_t popcount_table[256] = {
+        0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,
+        1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+        1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+        2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+        1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+        2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+        2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+        3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,4,5,5,6,5,6,6,7,5,6,6,7,6,7,7,8};
+
 void Util::computeAggregationHorizontal(semi_global_matching::SemiGlobalMatching *sgm,uint8_t *cost_aggr,bool forward)
 {
     // 获得图像参数以及初始代价参数
@@ -252,10 +263,11 @@ void Util::computeAggregationVertical(semi_global_matching::SemiGlobalMatching *
 uint8_t Util::Hamming(uint32_t x, uint32_t y)
 {
     uint32_t dist=0u,value = x ^ y;
-    while (value) {
-           dist++;
-           value &= value - 1;
-    }
+
+    dist =  popcount_table[value & 0xFF] +
+            popcount_table[(value >> 8) & 0xFF] +
+            popcount_table[(value >> 16) & 0xFF] +
+            popcount_table[(value >> 24) & 0xFF];
     return static_cast<uint8_t>(dist);
 }
 } 
